@@ -1,8 +1,11 @@
 package main
 
 import (
-	"os"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"io"
+	"os"
 )
 
 func main() {
@@ -13,24 +16,41 @@ func main() {
 		os.Exit(1)
 	}
 
-	// use Stat in lieu of Open here 'cause we'll need to know if
-	// we're operating on a file or directory
-	fs, serr := os.Stat(os.Args[1])
-	if serr != nil {
-		fmt.Println(serr)
+	fn := os.Args[1]
+	inputFile, oerr := os.Open(fn)
+	if oerr != nil {
+		fmt.Println(oerr)
 		os.Exit(1)
-	} else if fs.IsDir() {
-		// the operation was a success but we were provided a directory.
-		// throw an error for now; later we can handle this explicitly
+	}
+	defer inputFile.Close()
+
+	// use Stat to determine if we're handling a directory
+	fs, _ := inputFile.Stat()
+	if fs.IsDir() {
+		// throw an error until we revise this to handle dirs explicitly
 		fmt.Println("Can't operate on a directory. Please specify a specific file.")
 		os.Exit(1)
 	}
 
-	n := getDetails(fs)
-	fmt.Println(n)
+	fmt.Println(generateHash(inputFile))
 	//fmt.Printf("%+v\n",fs)
 }
 
-func getDetails(f os.FileInfo) string {
-	return "hello"
+func generateHash(f *os.File) string {
+	// first create the hashing object...
+	hm := sha1.New()
+	// then feed it the data present in the input file
+	if _, err := io.Copy(hm, f); err != nil {
+		// throw an error (exception?)
+	}
+
+	/*
+		calling Sum forces the hash to be computed. note that the param
+		supplied to the hasher (a byte array) can be used to populate,
+		compute and output a hash in one operation.
+
+		we then call EncodeToString to force the raw bytes into a format
+		suitable for output.
+	*/
+	return hex.EncodeToString(hm.Sum(nil))
 }
