@@ -26,5 +26,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("%+v\n",fs)
+	n := getDetails(fs)
+	fmt.Println(n)
+	//fmt.Printf("%+v\n",fs)
+}
+
+func getDetails(f os.FileInfo) string {
+	return "hello"
 }
